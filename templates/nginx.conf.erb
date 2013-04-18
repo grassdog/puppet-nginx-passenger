@@ -16,8 +16,8 @@ http {
     
     ### Passenger configuration 
 
-    passenger_root /usr/local/rvm/gems/<%= ruby_version %>/gems/passenger-<%= passenger_version %> ;
-    passenger_ruby /usr/local/rvm/wrappers/<%= ruby_version %>/ruby;
+    passenger_root /home/<%= user %>/.rbenv/versions/<%= ruby_version %>/lib/ruby/gems/1.9.1/gems/passenger-<%= passenger_version %>;
+    passenger_ruby /home/<%= user %>/.rbenv/versions/<%= ruby_version %>/bin/ruby;
 
     include       mime.types;
     default_type  application/octet-stream;

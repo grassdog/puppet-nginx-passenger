@@ -21,6 +21,7 @@
 # Sample Usage:  include nginx
 class nginx (
   $ruby_version = '1.9.3-p327',
+  $user = 'www-data'
   $passenger_version = '3.0.19',
   $logdir = '/var/log/nginx',
   $installdir = '/opt/nginx',
@@ -28,21 +29,26 @@ class nginx (
 
     $options = "--auto --auto-download  --prefix=${installdir}"
     $passenger_deps = [ 'libcurl4-openssl-dev' ]
-
-    include rvm
+    
 
     package { $passenger_deps: ensure => present }
 
-    rvm_system_ruby {
-      $ruby_version:
-        ensure      => 'present',
-        default_use => true;
+    rbenv::install { $user:
+      home => "/home/${user}",
+      require => User[$user]
     }
 
-    rvm_gem {
-      "${ruby_version}/passenger":
-        ensure => $passenger_version,
+    rbenv::compile { "${user}/${ruby_version}":
+      user => $user,
+      home => "/home/${user}",
+      global => true
     }
+
+    rbenv::gem { '${user} ${ruby_version} passenger':
+      gem => 'passenger',
+      user => $user,
+      ruby => $ruby_version 
+    } -> Exec["rbenv::rehash ${user} ${ruby_version}"]
 
     exec { 'create container':
       command => "/bin/mkdir ${www} && /bin/chown www-data:www-data ${www}",
@@ -51,10 +57,11 @@ class nginx (
     }
 
     exec { 'nginx-install':
-      command => "/bin/bash -l -i -c \"/usr/local/rvm/gems/${ruby_version}/bin/passenger-install-nginx-module ${options}\"",
+      command => "/bin/bash -l -i -c \"/home/${user}/.rbenv/versions/${ruby_version}/bin/passenger-install-nginx-module ${options}\"",
       group   => 'root',
       unless  => "/usr/bin/test -d ${installdir}",
-      require => [ Package[$dependencies_passenger], Rvm_system_ruby[$ruby_version], Rvm_gem["${ruby_version}/passenger"]];
+      require => [ Package[$dependencies_passenger], Rbenv::install[$user],
+                   Rbenv::compile["${user}/${ruby_version}"], Rbenv::gem["${user} ${ruby_version} passenger"]];
     }
 
     file { 'nginx-config':
