@@ -19,9 +19,9 @@
 #    puppet-rbenv
 #
 # Sample Usage:  include nginx
-class nginx (
+class nginx-passenger (
   $ruby_version = '1.9.3-p327',
-  $user = 'www-data'
+  $user = 'www-data',
   $passenger_version = '3.0.19',
   $logdir = '/var/log/nginx',
   $installdir = '/opt/nginx',
@@ -31,9 +31,13 @@ class nginx (
     $passenger_deps = [ 'libcurl4-openssl-dev' ]
     
 
-    package { $passenger_deps: ensure => present }
+    package { 'passenger_deps':
+      name => $passenger_deps,
+      ensure => present
+    }
 
     rbenv::install { $user:
+      user => $user,
       home => "/home/${user}",
       require => User[$user]
     }
@@ -41,13 +45,14 @@ class nginx (
     rbenv::compile { "${user}/${ruby_version}":
       user => $user,
       home => "/home/${user}",
+      ruby => $ruby_version,
       global => true
     }
 
-    rbenv::gem { '${user} ${ruby_version} passenger':
+    rbenv::gem { "${user} ${ruby_version} passenger":
       gem => 'passenger',
       user => $user,
-      ruby => $ruby_version 
+      ruby => $ruby_version
     } -> Exec["rbenv::rehash ${user} ${ruby_version}"]
 
     exec { 'create container':
@@ -60,8 +65,8 @@ class nginx (
       command => "/bin/bash -l -i -c \"/home/${user}/.rbenv/versions/${ruby_version}/bin/passenger-install-nginx-module ${options}\"",
       group   => 'root',
       unless  => "/usr/bin/test -d ${installdir}",
-      require => [ Package[$dependencies_passenger], Rbenv::install[$user],
-                   Rbenv::compile["${user}/${ruby_version}"], Rbenv::gem["${user} ${ruby_version} passenger"]];
+      require => [ Package['passenger_deps'], Rbenv::Install[$user],
+                   Rbenv::Compile["${user}/${ruby_version}"], Rbenv::Gem["${user} ${ruby_version} passenger"]];
     }
 
     file { 'nginx-config':
@@ -69,7 +74,7 @@ class nginx (
       owner   => 'root',
       group   => 'root',
       mode    => '0644',
-      content => template('nginx/nginx.conf.erb'),
+      content => template('nginx-passenger/nginx.conf.erb'),
       require => Exec['nginx-install'],
     }
 
@@ -85,7 +90,7 @@ class nginx (
       owner     => 'root',
       group     => 'root',
       mode      => '0755',
-      content   => template('nginx/nginx.init.erb'),
+      content   => template('nginx-passenger/nginx.init.erb'),
       require   => File['nginx-config'],
       subscribe => File['nginx-config'],
     }
