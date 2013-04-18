@@ -1,6 +1,6 @@
 # Class: nginx
 #
-# This module installs Nginx and its default configuration using rvm as the provider.
+# This module installs Nginx and its default configuration using rbenv.
 #
 # Parameters:
 #   $ruby_version
@@ -16,12 +16,12 @@
 # Actions:
 #
 # Requires:
-#    puppet-rvm
+#    puppet-rbenv
 #
 # Sample Usage:  include nginx
 class nginx (
-  $ruby_version = 'ruby-1.9.3-p125',
-  $passenger_version = '3.0.12',
+  $ruby_version = '1.9.3-p327',
+  $passenger_version = '3.0.19',
   $logdir = '/var/log/nginx',
   $installdir = '/opt/nginx',
   $www    = '/var/www' ) {
