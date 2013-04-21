@@ -19,7 +19,7 @@
 #    puppet-rbenv
 #
 # Sample Usage:  include nginx
-class nginx-passenger (
+class nginxpassenger (
   $ruby_version = '1.9.3-p327',
   $user = 'www-data',
   $passenger_version = '3.0.19',
@@ -74,7 +74,7 @@ class nginx-passenger (
       owner   => 'root',
       group   => 'root',
       mode    => '0644',
-      content => template('nginx-passenger/nginx.conf.erb'),
+      content => template('nginxpassenger/nginx.conf.erb'),
       require => Exec['nginx-install'],
     }
 
@@ -90,7 +90,7 @@ class nginx-passenger (
       owner     => 'root',
       group     => 'root',
       mode      => '0755',
-      content   => template('nginx-passenger/nginx.init.erb'),
+      content   => template('nginxpassenger/nginx.init.erb'),
       require   => File['nginx-config'],
       subscribe => File['nginx-config'],
     }
